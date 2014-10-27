@@ -171,8 +171,6 @@ def get_gcode_issue(issue_summary):
     # we can use to identify this issue as one that's passed through migration.
     labels = ['imported']
     for label in issue_summary['AllLabels'].split(', '):
-        if label.startswith('Priority-') and options.omit_priority:
-            continue
         labels.append(LABEL_MAPPING.get(label, label))
 
     # Add additional labels based on the issue's state
