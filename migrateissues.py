@@ -7,6 +7,7 @@ import optparse
 import re
 import sys
 import urllib2
+import json
 
 from datetime import datetime
 
@@ -45,6 +46,13 @@ STATE_MAPPING = {
     'duplicate': 'duplicate',
     'wontfix': 'wontfix'
 }
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, datetime):
+        serial = obj.isoformat()
+        return serial
 
 def output(string):
     sys.stdout.write(string)
@@ -250,40 +258,7 @@ def process_gcode_issues(existing_issues):
 
     for issue in issues:
         issue = get_gcode_issue(issue)
-
-        if options.skip_closed and (issue['state'] == 'closed'):
-            continue
-
-        # If we're trying to do a complete migration to a fresh Github project,
-        # and want to keep the issue numbers synced with Google Code's, then we
-        # need to create dummy closed issues for deleted or missing Google Code
-        # issues.
-        if options.synchronize_ids:
-            for gid in xrange(previous_gid + 1, issue['gid']):
-                if gid in existing_issues:
-                    continue
-
-                output('Creating dummy entry for missing issue %d\n' % gid)
-                title = 'Google Code skipped issue %d' % gid
-                body = '_Skipping this issue number to maintain synchronization with Google Code issue IDs._'
-                footer = GOOGLE_ISSUE_TEMPLATE.format(GOOGLE_URL.format(google_project_name, gid))
-                body += '\n\n' + footer
-                github_issue = github_repo.create_issue(title, body = body, labels = [github_label('imported')])
-                github_issue.edit(state = 'closed')
-                existing_issues[previous_gid] = github_issue
-            previous_gid = issue['gid']
-
-        # Add the issue and its comments to Github, if we haven't already
-        if issue['gid'] in existing_issues:
-            github_issue = existing_issues[issue['gid']]
-            output('Not adding issue %d (exists)' % issue['gid'])
-        else:
-            github_issue = add_issue_to_github(issue)
-
-        if github_issue:
-            add_comments_to_issue(github_issue, issue)
-            if github_issue.state != issue['state']:
-                github_issue.edit(state = issue['state'])
+        output(json.dumps(issue, default=json_serial))
         output('\n')
 
         log_rate_info()
@@ -295,7 +270,6 @@ def get_existing_github_issues():
     The result maps Google Code issue numbers to Github issue objects.
     """
 
-    output("Retrieving existing Github issues...\n")
     id_re = re.compile(GOOGLE_ID_RE % google_project_name)
 
     try:
