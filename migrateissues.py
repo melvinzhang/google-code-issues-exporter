@@ -250,7 +250,7 @@ def get_gcode_issues():
             return issues
 
 
-def process_gcode_issues(existing_issues):
+def process_gcode_issues():
     """ Migrates all Google Code issues in the given dictionary to Github. """
 
     issues = get_gcode_issues()
@@ -260,8 +260,6 @@ def process_gcode_issues(existing_issues):
         issue = get_gcode_issue(issue)
         output(json.dumps(issue, default=json_serial))
         output('\n')
-
-        log_rate_info()
 
 
 def get_existing_github_issues():
@@ -314,47 +312,16 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
 
-    if len(args) != 3:
+    if len(args) != 1:
         parser.print_help()
         sys.exit()
 
     label_cache = {} # Cache Github tags, to avoid unnecessary API requests
 
-    google_project_name, github_user_name, github_project = args
-
-    while True:
-        github_password = getpass.getpass("Github password: ")
-        try:
-            Github(github_user_name, github_password).get_user().login
-            break
-        except BadCredentialsException:
-            print "Bad credentials, try again."
-
-    github = Github(github_user_name, github_password)
-    log_rate_info()
-    github_user = github.get_user()
-
-    # If the project name is specified as owner/project, assume that it's owned by either
-    # a different user than the one we have credentials for, or an organization.
-
-    if "/" in github_project:
-        owner_name, github_project = github_project.split("/")
-        try:
-            github_owner = github.get_user(owner_name)
-        except GithubException:
-            try:
-                github_owner = github.get_organization(owner_name)
-            except GithubException:
-                github_owner = github_user
-    else:
-        github_owner = github_user
-
-    github_repo = github_owner.get_repo(github_project)
+    google_project_name = args[0]
 
     try:
-        existing_issues = get_existing_github_issues()
-        log_rate_info()
-        process_gcode_issues(existing_issues)
+        process_gcode_issues()
     except Exception:
         parser.print_help()
         raise
