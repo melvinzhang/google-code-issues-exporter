@@ -6,7 +6,7 @@ Run `pip install -r requirements.txt` to install all required libraries.
 
 ### Usage ###
 
-    migrateissues.py [options] <google project name>
+    export-issues.py [options] <google project name>
 
       google_project_name       The project name (from the URL) from google code
 
