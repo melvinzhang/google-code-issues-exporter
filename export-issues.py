@@ -297,7 +297,7 @@ def log_rate_info():
     #logging.info('Rate limit (remaining/total) %s',repr(github.rate_limit(refresh=True)))
 
 if __name__ == "__main__":
-    usage = "usage: %prog [options] <google project name> <github username> <github project>"
+    usage = "usage: %prog [options] <google project name>"
     description = "Migrate all issues from a Google Code project to a Github project."
     parser = optparse.OptionParser(usage = usage, description = description)
 
